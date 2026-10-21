@@ -110,13 +110,14 @@ The fingerprints were checked against live sites on 2026-10-22. Cloudways is mat
 Browsers can't read another site's headers, so a small Cloudflare Worker fetches them. Deploy it once, then point the page at it:
 
 ```sh
-cd worker && npx wrangler deploy     # prints https://php2shell-check.<you>.workers.dev
+cd worker && npx wrangler deploy     # prints https://php2shell-audit.<you>.workers.dev
 ```
 
-1. Put that URL in the production branch of the `API` constant in `docs/index.html`. It is deliberately empty in this checkout; the page explains when scanning is unavailable.
-2. Enable GitHub Pages: Settings → Pages → Deploy from branch `main`, folder `/docs`.
+1. Put that URL in the `API` constant in `docs/index.html`. If the constant is empty, the page says scanning is unavailable.
+2. Set `ALLOWED_ORIGIN` in `worker/wrangler.toml` to your Pages origin, then deploy again.
+3. Enable GitHub Pages: Settings → Pages → Deploy from branch `main`, folder `/docs`.
 
-The Worker accepts only GET and rejects credentials, IP literals and common local hostnames. Redirects are validated again; phpinfo probes stay on the final site's origin. Set `ALLOWED_TARGETS` to a comma-separated exact hostname list for a restricted deployment (include canonical redirect hosts), and `ALLOWED_ORIGIN` to your Pages origin. CORS is not authentication. An optional `RATE_LIMITER` binding is supported; use Cloudflare's [rate limiter configuration](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/) before exposing a public scanner.
+The Worker accepts only GET and rejects credentials, IP literals and common local hostnames. Redirects are validated again; phpinfo probes stay on the final site's origin. `wrangler.toml` limits each visitor IP to 10 scans a minute with Cloudflare's [rate limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/). Set `ALLOWED_TARGETS` to a comma-separated exact hostname list for a restricted deployment (include canonical redirect hosts). CORS is not authentication.
 
 Hostname checks are **not DNS pinning** and do not defend against every DNS rebinding scenario. Do not deploy this as a generic fetch service with private network access. Use a controlled target allowlist and network egress restrictions in that environment.
 
@@ -126,6 +127,7 @@ Hostname checks are **not DNS pinning** and do not defend against every DNS rebi
 npm test                                        # offline fixtures for check.sh, the Worker and the page
 bash check.sh --selftest                        # version logic only
 bash check.sh http://localhost:8080             # remote mode against a local site
+echo 'ALLOWED_ORIGIN=*' > worker/.dev.vars     # let the local page call the local Worker
 cd worker && npx wrangler dev                   # Worker on :8787
 python3 -m http.server -d docs 8000             # page on :8000, which uses the local Worker automatically
 ```

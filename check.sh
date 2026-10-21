@@ -13,7 +13,7 @@
 # Set WEBROOTS="/path/one /path/two" to scan custom web roots. NO_COLOR=1 turns off colors and animation.
 
 SINCE=2026-10-19 # the day before exploit details leaked
-UA="php2shell-check/1.0 (+https://github.com/arifulislamat/php2shell-audit)"
+UA="php2shell-audit/1.0 (+https://github.com/arifulislamat/php2shell-audit)"
 PROVIDERS_URL=https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/docs/providers.tsv
 VULN=0 IOC=0 EOL=0 UPLOAD_ON=0 UNCONFIRMED=0 RUNTIMES=0 TMP=''
 JSON=0 EVENTS='' MODE='' rc=0

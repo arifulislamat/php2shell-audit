@@ -1,11 +1,16 @@
-name = "php2shell-check"
+name = "php2shell-audit"
 main = "worker.js"
 compatibility_date = "2026-10-01"
 
-# Optional deployment controls (include redirect hosts in ALLOWED_TARGETS):
-# [vars]
-# ALLOWED_ORIGIN = "https://arifulislamat.github.io"
-# ALLOWED_TARGETS = "example.com,www.example.com"
-#
-# An optional rate limiter binding named RATE_LIMITER is supported.
-# Configure it per https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
+# Only the GitHub Pages site may call this Worker from a browser. For `wrangler dev`,
+# override it in worker/.dev.vars (gitignored) with: ALLOWED_ORIGIN=*
+# ALLOWED_TARGETS = "example.com,www.example.com" restricts scans to exact hostnames
+# (include canonical redirect hosts).
+[vars]
+ALLOWED_ORIGIN = "https://arifulislamat.github.io"
+
+# 10 scans per minute per visitor IP. namespace_id is any number unique in your Cloudflare account.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }

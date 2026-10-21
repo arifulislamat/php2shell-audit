@@ -39,12 +39,12 @@ test('provider patched claims and absent fingerprints never render green', () =>
   }
 });
 
-test('download exports the displayed JSON and unconfigured production UI is explicit', async () => {
+test('download exports the displayed JSON and the production page uses the deployed Worker', async () => {
   const p = page(); p.context.report = report; vm.runInContext('render(report)', p.context);
   assert.equal(p.element('#download').hidden, false);
   p.element('#download').events.click();
   assert.deepEqual(JSON.parse(await p.download.text()), report);
   const production = page('arifulislamat.github.io');
-  assert.equal(production.element('#go').disabled, true);
-  assert.match(production.element('#out').textContent, /not configured/);
+  assert.equal(vm.runInContext('API', production.context), 'https://php2shell-audit.arifulislamat.workers.dev');
+  assert.equal(production.element('#go').disabled, false);
 });

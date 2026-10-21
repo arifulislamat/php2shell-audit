@@ -82,7 +82,7 @@
 </footer>
 <script>
 // Set this to your deployed Worker URL (see worker/ in the repo). Local testing uses `wrangler dev`.
-const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : ''; // Set your deployed Worker URL here.
+const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://php2shell-audit.arifulislamat.workers.dev';
 let lastReport;
 
 const $ = (s) => document.querySelector(s);

@@ -4,7 +4,7 @@
 export const FIXED = { '8.5': 12, '8.4': 27, '8.3': 36, '8.2': 35 };
 const PATHS = ['phpinfo.php', 'info.php', 'php_info.php', 'i.php', 'test.php'];
 const VERSION = /\b(\d+)\.(\d+)\.(\d+)((?:-?(?:alpha|beta|RC)\d+)?)(?:[-+~][a-zA-Z0-9.+~_-]+)?\b/i;
-const UA = 'php2shell-check/2.0 (+https://github.com/arifulislamat/php2shell-audit)';
+const UA = 'php2shell-audit/2.0 (+https://github.com/arifulislamat/php2shell-audit)';
 export const ADVISORIES = [
   'https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w',
   'https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp',
