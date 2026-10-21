@@ -3,85 +3,369 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>php2shell checker</title>
-<meta name="description" content="Check whether your PHP, WordPress or Laravel site is exposed to php2shell (CVE-2026-109618 / CVE-2026-109619).">
+<title>php2shell Checker – CVE-2026-109618 &amp; CVE-2026-109619 PHP RCE</title>
+<meta name="description" content="Free, read-only php2shell checker for CVE-2026-109618 and CVE-2026-109619. Scan a WordPress, Laravel or PHP site. Fixed in PHP 8.5.12, 8.4.27, 8.3.36, 8.2.35.">
+<link rel="canonical" href="https://arifulislamat.github.io/php2shell-audit/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="Ariful Islam">
+<meta name="theme-color" content="#0d1117">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="alternate" type="text/markdown" href="llms.txt" title="php2shell checker summary for LLMs">
+<link rel="sitemap" type="application/xml" href="sitemap.xml">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="php2shell checker">
+<meta property="og:title" content="php2shell Checker – is your PHP site vulnerable to CVE-2026-109618 / CVE-2026-109619?">
+<meta property="og:description" content="Free, read-only check for the php2shell PHP RCE. Scan a site in your browser, or run one command on your server. Fixed in PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35.">
+<meta property="og:url" content="https://arifulislamat.github.io/php2shell-audit/">
+<meta property="og:image" content="https://arifulislamat.github.io/php2shell-audit/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="php2shell checker terminal output: PHP 8.3.6 vulnerable, PHP 8.5.12 patched">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="php2shell Checker – CVE-2026-109618 / CVE-2026-109619">
+<meta name="twitter:description" content="Free, read-only check for the php2shell PHP RCE. Fixed in PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35.">
+<meta name="twitter:image" content="https://arifulislamat.github.io/php2shell-audit/social-preview.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://arifulislamat.github.io/php2shell-audit/#app",
+      "name": "php2shell checker",
+      "alternateName": "php2shell-audit",
+      "description": "Free, read-only checker for php2shell (CVE-2026-109618 and CVE-2026-109619), an unauthenticated remote code execution flaw in PHP. It checks PHP runtimes, distro backports, containers and signs of compromise on a server, or fingerprints a website's PHP version from outside.",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "Linux, macOS",
+      "url": "https://arifulislamat.github.io/php2shell-audit/",
+      "downloadUrl": "https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh",
+      "sameAs": "https://github.com/arifulislamat/php2shell-audit",
+      "image": "https://arifulislamat.github.io/php2shell-audit/social-preview.png",
+      "license": "https://opensource.org/licenses/MIT",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "keywords": "php2shell, CVE-2026-109618, CVE-2026-109619, PHP RCE, WordPress, Laravel, vulnerability scanner",
+      "dateModified": "2026-10-22",
+      "author": { "@id": "https://arifulislamat.com/#person" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://arifulislamat.com/#person",
+      "name": "Ariful Islam",
+      "url": "https://arifulislamat.com",
+      "sameAs": ["https://github.com/arifulislamat", "https://dev.to/arifulislamat"]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://arifulislamat.github.io/php2shell-audit/#faq",
+      "mainEntity": [
+        { "@type": "Question", "name": "What is php2shell?",
+          "acceptedAnswer": { "@type": "Answer", "text": "php2shell is the name for CVE-2026-109618 and CVE-2026-109619, an unauthenticated remote code execution flaw in PHP itself. Any site running a vulnerable PHP version is affected: WordPress, Laravel, Drupal, Joomla and custom PHP alike." } },
+        { "@type": "Question", "name": "Which PHP versions fix CVE-2026-109618 and CVE-2026-109619?",
+          "acceptedAnswer": { "@type": "Answer", "text": "PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35. PHP 8.1 and older get no upstream fix: upgrade to 8.2 or newer, or use a vendor backport such as Ubuntu Pro, Debian LTS or CloudLinux." } },
+        { "@type": "Question", "name": "Does updating WordPress, Laravel or plugins fix php2shell?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. The flaw is in the PHP runtime, so only updating PHP fixes it. After updating, restart PHP-FPM, Apache or LiteSpeed, otherwise the old code keeps running." } },
+        { "@type": "Question", "name": "My server still shows an old PHP version number. Am I vulnerable?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Not necessarily. Ubuntu, Debian and RHEL often backport the fix without changing the version number. The server check reads the package changelog to confirm the backport." } },
+        { "@type": "Question", "name": "How do I check my PHP version without SSH?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Scan the site on this page, or in WordPress open Tools, Site Health, Info, Server to see the PHP version. On managed hosting, ask your host whether your PHP includes the fixes for CVE-2026-109618 and CVE-2026-109619." } },
+        { "@type": "Question", "name": "I can't patch yet. How do I reduce the risk?",
+          "acceptedAnswer": { "@type": "Answer", "text": "In php.ini or the PHP-FPM pool (not ini_set() or .user.ini) set session.upload_progress.enabled = 0, plus fatal_error_backtraces = 0 on PHP 8.5. For CVE-2026-109618, set a non-overridable memory_limit = -1 with container or cgroup memory limits, and post_max_size = 8M. Restart all PHP workers and keep your WAF on. This reduces exposure but is not a fix." } },
+        { "@type": "Question", "name": "Is a WAF such as Cloudflare enough?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. A WAF can reduce exposure, but it is a mitigation, not a fix. Update PHP as well." } },
+        { "@type": "Question", "name": "Is the php2shell checker safe to run?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is read-only: remote checks send ordinary GET requests to a few public paths, and the server check only reads files, processes and logs. It sends no exploit payloads and changes nothing. The source code is on GitHub under the MIT license." } }
+      ]
+    }
+  ]
+}
+</script>
+
 <style>
-  :root { --bg: #f7f7f5; --card: #fff; --fg: #1d1d1b; --muted: #5f5f5a; --line: #e2e2dc; --accent: #4f5bd5;
-          --bad: #c0362c; --bad-bg: #fdecea; --ok: #23784a; --ok-bg: #e7f5ec; --warn: #9a6200; --warn-bg: #fff4dc; --code: #f0f0ec; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #151514; --card: #1e1e1c; --fg: #ececea; --muted: #a3a39d; --line: #33332f; --accent: #8f98ff;
-            --bad: #ff8a80; --bad-bg: #3a1e1b; --ok: #7fd6a0; --ok-bg: #18301f; --warn: #ffc864; --warn-bg: #352a12; --code: #2a2a27; }
+  :root {
+    --bg: #0d1117; --panel: #010409; --line: #30363d; --fg: #e6edf3; --muted: #8b949e;
+    --pink: #ff0087; --hot: #ff00af; --magenta: #d700af; --purple: #af00ff; --violet: #8700ff; --indigo: #5f5fff;
+    --lav: #af87ff; --cyan: #00ffff; --green: #00ff87; --yellow: #ffd700; --red: #ff4d4d;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
-  h1 { font-size: 1.9rem; margin: 0 0 4px; } h2 { font-size: 1.15rem; margin: 32px 0 8px; }
-  p { margin: 8px 0; } .muted { color: var(--muted); } a { color: var(--accent); overflow-wrap: anywhere; }
-  form { display: flex; gap: 8px; margin: 24px 0 8px; flex-wrap: wrap; }
-  input { flex: 1 1 260px; padding: 12px 14px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); }
-  button { padding: 12px 20px; font: inherit; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
-  button:disabled { opacity: .6; cursor: wait; }
-  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-top: 16px; }
-  .verdict { font-weight: 700; font-size: 1.1rem; padding: 10px 14px; border-radius: 8px; margin: 0 0 12px; }
-  .bad { background: var(--bad-bg); color: var(--bad); } .ok { background: var(--ok-bg); color: var(--ok); } .warn { background: var(--warn-bg); color: var(--warn); }
-  ul, ol { padding-left: 22px; margin: 8px 0; } li { margin: 4px 0; }
-  code, pre { font: 0.88rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code); border-radius: 6px; }
-  code { padding: 1px 5px; overflow-wrap: anywhere; } pre { padding: 12px 14px; overflow-x: auto; margin: 8px 0; white-space: pre; }
-  .copy { position: relative; } .copy button { position: absolute; top: 6px; right: 6px; padding: 4px 10px; font-size: .8rem; }
-  table { border-collapse: collapse; width: 100%; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
-  .gh { display: inline-flex; color: var(--fg); padding: 6px; border-radius: 8px; } .gh:hover { color: var(--accent); }
-  .gh svg { width: 28px; height: 28px; fill: currentColor; }
-  footer { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+  html { background: var(--bg); }
+  body {
+    margin: 0; color: var(--fg); font: 15px/1.65 var(--mono);
+    background:
+      radial-gradient(900px 420px at 15% -10%, rgba(255, 0, 135, .13), transparent 70%),
+      radial-gradient(800px 420px at 95% 0%, rgba(135, 0, 255, .14), transparent 70%),
+      var(--bg);
+    min-height: 100vh;
+  }
+  /* CRT scanlines: decorative only. */
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 10;
+    background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px);
+  }
+  main, footer { max-width: 880px; margin: 0 auto; padding: 0 16px; }
+  main { padding-top: 36px; padding-bottom: 48px; }
+  a { color: var(--cyan); text-decoration-color: rgba(0, 255, 255, .4); text-underline-offset: 3px; overflow-wrap: anywhere; }
+  a:hover { color: var(--pink); text-decoration-color: var(--pink); }
+  :focus-visible { outline: 2px solid var(--pink); outline-offset: 3px; }
+  p { margin: 10px 0; }
+  .muted { color: var(--muted); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  code { color: var(--cyan); background: rgba(0, 255, 255, .07); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+  b, strong { color: #fff; }
+
+  /* ── header ─────────────────────────────────────────── */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .gh { color: var(--muted); display: inline-flex; padding: 6px; } .gh:hover { color: var(--pink); }
+  .gh svg { width: 26px; height: 26px; fill: currentColor; }
+  .banner {
+    margin: 0; min-width: 0; line-height: 1; white-space: pre; overflow: hidden; font-weight: 700;
+    font-size: clamp(4px, calc((100vw - 82px) / 44), 14px);
+    text-shadow: 0 0 10px rgba(255, 0, 135, .45);
+  }
+  .banner span { display: block; }
+  .b1 { color: var(--pink); } .b2 { color: var(--hot); } .b3 { color: var(--magenta); }
+  .b4 { color: var(--purple); } .b5 { color: var(--violet); } .b6 { color: var(--indigo); }
+  h1 { font-size: 1rem; margin: 14px 0 2px; font-weight: 700; letter-spacing: .02em; }
+  h1 .deco { color: var(--pink); } h1 .cve { color: var(--cyan); font-weight: 400; margin-left: 8px; white-space: nowrap; }
+  .byline { color: var(--muted); margin: 0 0 18px; }
+  .byline b { color: var(--lav); }
+  .boot { margin: 0; padding: 0; list-style: none; }
+  .boot li::before { content: "> "; color: var(--muted); }
+  .boot .k { color: var(--cyan); display: inline-block; min-width: 8ch; }
+  .boot .g { color: var(--green); }
+
+  /* ── section headers, like check.sh's hdr() ────────── */
+  h2 {
+    display: flex; align-items: center; gap: 10px; margin: 44px 0 14px;
+    font-size: 1rem; text-transform: uppercase; letter-spacing: .04em;
+  }
+  h2::before { content: ""; width: 4px; align-self: stretch; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+  h2 .n { color: var(--lav); } h2 .n::after { content: " ▸"; color: var(--cyan); }
+  h2::after { content: ""; flex: 1; border-top: 2px solid var(--line); min-width: 24px; }
+  h3 { font-size: .95rem; margin: 20px 0 6px; color: var(--yellow); text-transform: uppercase; letter-spacing: .04em; }
+
+  /* ── terminal window + scanner ─────────────────────── */
+  .term { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+          box-shadow: 0 0 0 1px rgba(255, 0, 135, .08), 0 12px 40px rgba(0, 0, 0, .45), 0 0 34px rgba(135, 0, 255, .12); }
+  .bar { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .8rem; }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; background: #30363d; }
+  .bar i:nth-child(1) { background: #ff5f56; } .bar i:nth-child(2) { background: #ffbd2e; } .bar i:nth-child(3) { background: #27c93f; }
+  .bar span { margin-left: 8px; }
+  .body { padding: 16px; }
+  form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; }
+  form label { color: var(--green); font-weight: 700; white-space: nowrap; }
+  form label .c { color: var(--cyan); font-weight: 400; }
+  input {
+    flex: 1 1 220px; min-width: 0; padding: 9px 2px; font: inherit; font-size: 16px; color: var(--fg);
+    background: transparent; border: 0; border-bottom: 1px dashed var(--line); caret-color: var(--pink);
+  }
+  input::placeholder { color: #6e7681; }
+  input:focus { outline: none; border-bottom: 1px solid var(--pink); }
+  button {
+    font: inherit; font-weight: 700; color: var(--bg); background: var(--pink); border: 0; border-radius: 4px;
+    padding: 9px 18px; cursor: pointer; text-transform: uppercase; letter-spacing: .06em;
+    box-shadow: 0 0 14px rgba(255, 0, 135, .45);
+  }
+  button:hover { background: var(--hot); }
+  button:disabled { opacity: .65; cursor: wait; }
+  .hint { color: var(--muted); font-size: .85rem; margin: 12px 0 0; }
+  #download { margin-top: 12px; background: transparent; color: var(--cyan); border: 1px solid var(--cyan); box-shadow: none; }
+  #download:hover { background: rgba(0, 255, 255, .08); }
+
+  /* ── scan result ───────────────────────────────────── */
+  /* Same line types as check.sh: [ OK ] dotted, [ >> ] key :: value, [WARN] / [VULN], │ detail. */
+  #out:not(:empty) { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+  .t-line { margin: 2px 0; padding-left: 7ch; text-indent: -7ch; }
+  .t-line, .t-block { animation: t-show .01s linear backwards; animation-delay: calc(var(--i, 0) * 55ms); }
+  @keyframes t-show { from { visibility: hidden; } }
+  .t-ok { color: var(--green); } .t-kv { color: var(--cyan); } .t-warn { color: var(--yellow); }
+  .t-bad { color: var(--red); font-weight: 700; } .t-dim { color: var(--muted); }
+  .t-dots { display: flex; gap: 1ch; align-items: baseline; text-indent: 0; padding-left: 0; }
+  .t-dots > span:first-child { padding-left: 7ch; text-indent: -7ch; overflow-wrap: anywhere; }
+  .t-dots .t-fill { flex: 1; min-width: 2ch; border-bottom: 2px dotted #484f58; }
+  .t-dots > span:last-child { white-space: nowrap; }
+  .t-key { display: inline-block; min-width: 12ch; text-indent: 0; }
+  .t-info { padding-left: 9ch; text-indent: -2ch; color: var(--muted); }
+  .t-info::before { content: "│ "; }
+  .t-hdr { display: flex; align-items: center; gap: 1ch; margin: 16px 0 6px; padding: 0; text-indent: 0; font-weight: 700; text-transform: uppercase; }
+  .t-hdr::before { content: ""; width: 3px; align-self: stretch; background: var(--pink); }
+  .t-hdr .t-n { color: var(--lav); } .t-hdr .t-n::after { content: " ▸"; color: var(--cyan); }
+  .t-hdr::after { content: ""; flex: 1; border-top: 2px solid var(--line); }
+  .t-hdr:first-child { margin-top: 0; }
+  .t-spin::before { content: "⠋"; color: var(--pink); animation: t-spin .8s steps(1) infinite; }
+  @keyframes t-spin { 10% { content: "⠙"; } 20% { content: "⠹"; } 30% { content: "⠸"; } 40% { content: "⠼"; } 50% { content: "⠴"; }
+                      60% { content: "⠦"; } 70% { content: "⠧"; } 80% { content: "⠇"; } 90% { content: "⠏"; } }
+  .t-block { padding-left: 2ch; }
+  .t-wait { padding: 0; text-indent: 0; color: var(--muted); }
+  .t-block h3 { margin: 10px 0 4px; }
+  .verdict { margin: 14px 0 4px; padding: 10px 14px; border: 4px double currentColor; font-weight: 700; }
+  .verdict::before { content: ">> "; }
+  .verdict.ok { color: var(--green); } .verdict.warn { color: var(--yellow); } .verdict.bad { color: var(--red); text-shadow: 0 0 10px rgba(255, 77, 77, .4); }
+  @media (prefers-reduced-motion: reduce) { .t-line, .t-block { animation: none; } .t-spin::before { animation: none; } }
+  ol { list-style: none; counter-reset: step; padding: 0; margin: 8px 0; }
+  ol li { counter-increment: step; padding-left: 4.5ch; text-indent: -4.5ch; margin: 6px 0; }
+  ol li::before { content: "[" counter(step) "] "; color: var(--cyan); font-weight: 700; }
+
+  /* ── tables, commands, FAQ ─────────────────────────── */
+  .table { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { color: var(--muted); font-weight: 400; text-transform: uppercase; font-size: .8rem; letter-spacing: .05em; }
+  td.fix { color: var(--green); font-weight: 700; } td.eol { color: var(--red); }
+  .way { margin: 22px 0; }
+  .way h3 { color: var(--fg); text-transform: none; letter-spacing: 0; font-size: 1rem; }
+  .way h3 .tag { color: var(--lav); }
+  .copy { position: relative; }
+  .copy pre {
+    margin: 8px 0; padding: 14px 84px 14px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    white-space: pre-wrap; overflow-wrap: anywhere; color: var(--green); font: inherit; font-size: .88rem;
+  }
+  .copy pre::before { content: "$ "; color: var(--pink); }
+  .copy button { position: absolute; top: 8px; right: 8px; padding: 4px 10px; font-size: .75rem; box-shadow: none;
+                 background: transparent; color: var(--cyan); border: 1px solid var(--line); }
+  .copy button:hover { border-color: var(--cyan); }
+  details { border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; background: rgba(1, 4, 9, .55); }
+  summary { cursor: pointer; padding: 12px 14px; font-weight: 700; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "[+] "; color: var(--pink); }
+  details[open] summary::before { content: "[-] "; }
+  details > div { padding: 0 14px 12px 6ch; color: #c9d1d9; }
+
+  /* ── footer ────────────────────────────────────────── */
+  footer { padding-bottom: 44px; color: var(--muted); font-size: .88rem; }
+  footer p { margin: 0; padding-top: 22px; border-top: 1px solid var(--line); }
+  footer .who { color: var(--lav); }
+  .cursor { display: inline-block; width: .6em; height: 1.1em; background: var(--pink); vertical-align: text-bottom; margin-left: 4px;
+            animation: blink 1.1s steps(1) infinite; box-shadow: 0 0 8px var(--pink); }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  @media (max-width: 560px) {
+    body { font-size: 14px; }
+    h1 .cve { display: block; margin: 2px 0 0; }
+    .boot .k { min-width: 0; margin-right: 1ch; }
+    .copy pre { padding-right: 14px; padding-top: 40px; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <div class="top">
-    <h1>php2shell checker</h1>
-    <a class="gh" href="https://github.com/arifulislamat/php2shell-audit" aria-label="php2shell on GitHub" title="View on GitHub">
-      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
-    </a>
-  </div>
-  <p class="muted">CVE-2026-109618 / CVE-2026-109619: unauthenticated remote code execution in PHP itself. Assess the PHP runtime behind WordPress, Laravel, Drupal, Joomla and custom code.
-    <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Read the full write-up</a>.</p>
+  <header>
+    <div class="top">
+      <pre class="banner" aria-hidden="true"><span class="b1">██████╗ ██╗  ██╗██████╗ ██████╗ ███████╗██╗  ██╗███████╗██╗     ██╗</span><span class="b2">██╔══██╗██║  ██║██╔══██╗╚════██╗██╔════╝██║  ██║██╔════╝██║     ██║</span><span class="b3">██████╔╝███████║██████╔╝ █████╔╝███████╗███████║█████╗  ██║     ██║</span><span class="b4">██╔═══╝ ██╔══██║██╔═══╝ ██╔═══╝ ╚════██║██╔══██║██╔══╝  ██║     ██║</span><span class="b5">██║     ██║  ██║██║     ███████╗███████║██║  ██║███████╗███████╗███████╗</span><span class="b6">╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝</span></pre>
+      <a class="gh" href="https://github.com/arifulislamat/php2shell-audit" aria-label="php2shell checker on GitHub" title="View on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+      </a>
+    </div>
+    <h1><span class="deco" aria-hidden="true">░▒▓ </span>php2shell checker<span class="deco" aria-hidden="true"> ▓▒░</span><span class="cve">CVE-2026-109618 · CVE-2026-109619</span></h1>
+    <p class="byline">coded by <b>Ariful Islam</b> · <a href="https://arifulislamat.com">arifulislamat.com</a> · updated <time datetime="2026-10-22">2026-10-22</time></p>
+    <ul class="boot">
+      <li><span class="k">threat</span>unauthenticated remote code execution in PHP itself</li>
+      <li><span class="k">affects</span>WordPress · Laravel · Drupal · Joomla · custom PHP</li>
+      <li><span class="k">patched</span><span class="g">8.5.12 · 8.4.27 · 8.3.36 · 8.2.35</span> <span class="muted">// 8.1 and older: no upstream fix</span></li>
+    </ul>
+  </header>
 
-  <form id="f">
-    <label for="u" class="muted" style="flex-basis:100%">Website address</label>
-    <input id="u" type="text" inputmode="url" placeholder="example.com" autocomplete="url" required>
-    <button id="go">Scan</button>
-  </form>
-  <p class="muted" style="font-size:.9rem">Passive check: it reads public headers and a few common <code>phpinfo</code> URLs. It sends no exploit payloads and stores nothing.</p>
-  <div id="out" aria-live="polite"></div>
-  <button id="download" type="button" hidden>Download JSON report</button>
-  <p class="muted">Reports separate reported PHP versions, incomplete checks and unknown results. A remote scan cannot certify a patch or rule out compromise.</p>
+  <section aria-labelledby="scan">
+    <h2 id="scan"><span class="n">01</span> Scan a website</h2>
+    <div class="term">
+      <div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>php2shell — remote mode (passive fingerprinting)</span></div>
+      <div class="body">
+        <form id="f">
+          <label for="u"><span aria-hidden="true">➜ <span class="c">scan</span></span><span class="sr">Website address</span></label>
+          <input id="u" type="text" inputmode="url" placeholder="example.com" autocomplete="url" spellcheck="false" required>
+          <button id="go">Scan</button>
+        </form>
+        <noscript><p class="hint">Turn on JavaScript to scan here, or use one of the commands below.</p></noscript>
+        <div id="out" aria-live="polite"></div>
+      </div>
+    </div>
+    <p class="hint">// read-only: public headers + 5 common phpinfo() paths · no exploit payloads · nothing stored</p>
+    <button id="download" type="button" hidden>Download JSON report</button>
+    <p class="muted">A remote scan reports the PHP version a site reveals. It can't see distro backports or signs of an attack, and can't prove a site is safe: for that, run the server check below.</p>
+  </section>
 
-  <h2>Fixed PHP versions</h2>
-  <table>
-    <tr><th>Branch</th><th>Patched in</th></tr>
-    <tr><td>8.5</td><td>8.5.12</td></tr><tr><td>8.4</td><td>8.4.27</td></tr>
-    <tr><td>8.3</td><td>8.3.36</td></tr><tr><td>8.2</td><td>8.2.35</td></tr>
-    <tr><td>8.1 and older</td><td>No upstream fix. Upgrade to 8.2+ or use a vendor backport.</td></tr>
-  </table>
-  <p class="muted">Source: <a href="https://www.php.net/">php.net</a>, advisories
-    <a href="https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w">GHSA-w8hw-w9fx-j79w</a> and
-    <a href="https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp">GHSA-6wmf-4rv5-p3rp</a>.</p>
+  <section aria-labelledby="versions">
+    <h2 id="versions"><span class="n">02</span> Fixed PHP versions</h2>
+    <div class="table">
+      <table>
+        <tr><th>Branch</th><th>Patched in</th></tr>
+        <tr><td>8.5</td><td class="fix">8.5.12</td></tr>
+        <tr><td>8.4</td><td class="fix">8.4.27</td></tr>
+        <tr><td>8.3</td><td class="fix">8.3.36</td></tr>
+        <tr><td>8.2</td><td class="fix">8.2.35</td></tr>
+        <tr><td>8.1 and older</td><td class="eol">No upstream fix. Upgrade to 8.2+ or use a vendor backport.</td></tr>
+      </table>
+    </div>
+    <p class="muted">Source: <a href="https://www.php.net/">php.net</a>, advisories
+      <a href="https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w">GHSA-w8hw-w9fx-j79w</a> and
+      <a href="https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp">GHSA-6wmf-4rv5-p3rp</a>.</p>
+  </section>
 
-  <h2>Deeper check: run it on your server</h2>
-  <p>A website scan can't see distro backports, Docker containers or signs of an attack. Run this on the server (read-only, changes nothing):</p>
-  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash</pre></div>
-  <p>Or scan a site from your own computer:</p>
-  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | bash -s -- https://example.com</pre></div>
-  <p class="muted">Shared hosting with no SSH? In WordPress, open <b>Tools → Site Health → Info → Server</b> to see the PHP version, or ask your host.</p>
+  <section aria-labelledby="ways">
+    <h2 id="ways"><span class="n">03</span> Check from the command line</h2>
+    <div class="way">
+      <h3><span class="tag">[server]</span> On your server: the most accurate check</h3>
+      <p>Finds every PHP build (CLI, FPM, mod_php, LiteSpeed, FrankenPHP, cPanel, Plesk, Docker), confirms distro backports, and looks for web shells and other signs of compromise. Read-only.</p>
+      <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash</pre></div>
+    </div>
+    <div class="way">
+      <h3><span class="tag">[remote]</span> From your computer, against a site</h3>
+      <p>The same checks as the scanner above, from your own terminal.</p>
+      <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | bash -s -- https://example.com</pre></div>
+    </div>
+    <p class="muted">Shared hosting with no SSH? In WordPress, open <b>Tools → Site Health → Info → Server</b> to see the PHP version, or ask your host.</p>
+  </section>
+
+  <section aria-labelledby="faq">
+    <h2 id="faq"><span class="n">04</span> FAQ</h2>
+    <details>
+      <summary>What is php2shell?</summary>
+      <div>php2shell is the name for <b>CVE-2026-109618</b> and <b>CVE-2026-109619</b>, an unauthenticated remote code execution flaw in PHP itself. Any site running a vulnerable PHP version is affected: WordPress, Laravel, Drupal, Joomla and custom PHP alike.</div>
+    </details>
+    <details>
+      <summary>Which PHP versions fix CVE-2026-109618 and CVE-2026-109619?</summary>
+      <div>PHP <b>8.5.12</b>, <b>8.4.27</b>, <b>8.3.36</b> and <b>8.2.35</b>. PHP 8.1 and older get no upstream fix: upgrade to 8.2 or newer, or use a vendor backport such as Ubuntu Pro, Debian LTS or CloudLinux.</div>
+    </details>
+    <details>
+      <summary>Does updating WordPress, Laravel or plugins fix php2shell?</summary>
+      <div>No. The flaw is in the PHP runtime, so only updating PHP fixes it. After updating, restart PHP-FPM, Apache or LiteSpeed, otherwise the old code keeps running.</div>
+    </details>
+    <details>
+      <summary>My server still shows an old PHP version number. Am I vulnerable?</summary>
+      <div>Not necessarily. Ubuntu, Debian and RHEL often backport the fix without changing the version number. The server check reads the package changelog to confirm the backport.</div>
+    </details>
+    <details>
+      <summary>How do I check my PHP version without SSH?</summary>
+      <div>Scan the site on this page, or in WordPress open <b>Tools → Site Health → Info → Server</b> to see the PHP version. On managed hosting, ask your host whether your PHP includes the fixes for CVE-2026-109618 and CVE-2026-109619.</div>
+    </details>
+    <details>
+      <summary>I can't patch yet. How do I reduce the risk?</summary>
+      <div>In <code>php.ini</code> or the PHP-FPM pool (not <code>ini_set()</code> or <code>.user.ini</code>) set <code>session.upload_progress.enabled = 0</code>, plus <code>fatal_error_backtraces = 0</code> on PHP 8.5. For CVE-2026-109618, set a non-overridable <code>memory_limit = -1</code> with container or cgroup memory limits, and <code>post_max_size = 8M</code>. Restart all PHP workers and keep your WAF on. This reduces exposure but is not a fix.</div>
+    </details>
+    <details>
+      <summary>Is a WAF such as Cloudflare enough?</summary>
+      <div>No. A WAF can reduce exposure, but it is a mitigation, not a fix. Update PHP as well.</div>
+    </details>
+    <details>
+      <summary>Is the php2shell checker safe to run?</summary>
+      <div>Yes. It is read-only: remote checks send ordinary GET requests to a few public paths, and the server check only reads files, processes and logs. It sends no exploit payloads and changes nothing. The <a href="https://github.com/arifulislamat/php2shell-audit">source code</a> is on GitHub under the MIT license.</div>
+    </details>
+  </section>
 </main>
 <footer>
-  Built by <a href="https://arifulislamat.com">Ariful Islam</a> ·
-  <a href="https://github.com/arifulislamat/php2shell-audit">Source on GitHub</a> ·
-  <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Write-up</a>
+  <p><span class="muted">//</span> php2shell by <span class="who">Ariful Islam</span> · <a href="https://arifulislamat.com">arifulislamat.com</a> ·
+    <a href="https://github.com/arifulislamat/php2shell-audit">GitHub</a> ·
+    <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Write-up</a> ·
+    <a href="llms.txt">llms.txt</a><span class="cursor" aria-hidden="true"></span></p>
 </footer>
 <script>
-// Set this to your deployed Worker URL (see worker/ in the repo). Local testing uses `wrangler dev`.
+// Local testing uses `wrangler dev`.
 const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://php2shell-audit.arifulislamat.workers.dev';
 let lastReport;
 
@@ -105,10 +389,24 @@ async function provider(r) {
   } catch { /* no provider info is fine */ }
 }
 
+// Terminal lines, mirroring check.sh's hdr() / ok() / warn() / bad() / kv() / info() / dots().
+const T = {
+  hdr: (n, title) => `<div class="t-line t-hdr"><span class="t-n">${n}</span> ${esc(title)}</div>`,
+  ok: (h) => `<div class="t-line">[<span class="t-ok"> OK </span>] ${h}</div>`,
+  warn: (h) => `<div class="t-line">[<span class="t-warn">WARN</span>] ${h}</div>`,
+  bad: (h) => `<div class="t-line">[<span class="t-bad">VULN</span>] ${h}</div>`,
+  kv: (k, h) => `<div class="t-line">[<span class="t-kv"> &gt;&gt; </span>] <span class="t-key">${esc(k)}</span><span class="t-dim">::</span> ${h}</div>`,
+  info: (h) => `<div class="t-line t-info">${h}</div>`,
+  dots: (label, word) => `<div class="t-line t-dots"><span>[<span class="t-ok"> OK </span>] ${esc(label)}</span><span class="t-fill"></span><span class="t-ok">${esc(word)}</span></div>`,
+};
+const dim = (h) => `<span class="t-dim">${h}</span>`;
+
+const fixTitle = (r) => r.verdict !== 'unknown' ? 'How to fix' : r.provider ? 'What to do' : 'If your PHP is older than the fixed versions';
+
 function fixes(r) {
   const p = r.provider;
   if (p) {
-    return `<h3>${r.verdict === 'unknown' ? 'What to do' : 'How to fix'}</h3><ol>
+    return `<ol>
       <li>${esc(p.name)} manages PHP for you, so you can't patch it yourself. Ask their support whether your site's PHP includes the fixes for <b>CVE-2026-109618 / CVE-2026-109619</b> (PHP 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 or a backport).</li>
       ${p.link ? `<li>Watch their status page: <a href="${esc(p.link)}">${esc(p.link)}</a></li>` : ''}
       <li>If their dashboard lets you choose the PHP version, pick a patched branch once it's offered.</li>
@@ -122,60 +420,84 @@ function fixes(r) {
     'Restart PHP workers (<code>sudo systemctl restart php8.x-fpm</code>, or Apache for mod_php). Until they restart, the old code keeps running.',
     `Confirm on the server: <code>${esc(SERVER_CMD)}</code>`,
   ].filter(Boolean);
-  return `<h3>${r.verdict === 'unknown' ? 'If your PHP is older than the versions above' : 'How to fix'}</h3><ol>${steps.map((s) => `<li>${s}</li>`).join('')}</ol>
+  return `<ol>${steps.map((s) => `<li>${s}</li>`).join('')}</ol>
     <p><b>Updating WordPress, Laravel or plugins does not fix this.</b> Only the PHP runtime does.</p>
-    <p><b>Can't patch yet?</b> Interim mitigation, not a fix: in <code>php.ini</code> or the FPM pool (not <code>ini_set()</code> or <code>.user.ini</code>) set
+    <h3>Interim mitigation</h3>
+    <p class="muted">Can't patch yet? This reduces exposure, it is not a fix. In <code>php.ini</code> or the FPM pool (not <code>ini_set()</code> or <code>.user.ini</code>) set
       <code>session.upload_progress.enabled = 0</code>, plus <code>fatal_error_backtraces = 0</code> on PHP 8.5; for CVE-2026-109618 a non-overridable <code>memory_limit = -1</code>
       with container memory limits and <code>post_max_size = 8M</code>. Restart all workers and keep your WAF on.</p>`;
 }
 
+// The same sections as `check.sh <url>`: recon, verdict, how to fix, summary.
 function render(r) {
-  const verdicts = {
-    vulnerable: ['bad', r.eol ? `Vulnerable: PHP ${r.version} is end-of-life and has no upstream fix` : `Likely vulnerable: PHP ${r.version} (fixed in ${r.fixedIn})`],
-    patched: ['ok', `Reported patched version: PHP ${r.version}`],
-    unknown: ['warn', 'Unconfirmed: version or scan coverage is incomplete'],
-    'no-php': ['warn', 'No PHP fingerprints found — PHP may still be present'],
-  };
-  let [cls, text] = verdicts[r.verdict];
   const p = r.provider, when = p?.checked ? ` (checked ${p.checked})` : '';
-  // Provider status only fills in when the version itself is hidden; a visible version always wins.
-  if (p && r.verdict === 'unknown') {
-    if (p.patched === 'yes') [cls, text] = ['warn', `${p.name} reports patched PHP${when}; confirm this site's pool with the host`];
-    else if (p.patched === 'no') [cls, text] = ['bad', `Hosted on ${p.name}, which has not patched PHP yet${when}`];
-    else text = `PHP detected, version hidden. Hosted on ${p.name}: patch status not confirmed yet`;
+  const url = String(r.url || '').replace(/\/$/, ''), site = esc(url);
+  const src = r.observations?.find((o) => o.version === r.version)?.source;
+  const out = [T.hdr('01', 'Recon')];
+  out.push(r.httpStatus >= 400 ? T.warn(`Main page returned HTTP ${esc(r.httpStatus)}; coverage is incomplete.`) : T.dots(`connecting to ${url}`, 'online'));
+  out.push(T.kv('server', esc(r.server || 'hidden')));
+  out.push(T.kv('php signals', esc(r.signals.join(', ') || 'none')));
+  if (r.version) out.push(T.kv('php version', `${esc(r.version)} ${dim(src === 'phpinfo' ? '(exposed in a phpinfo() page)' : '(exposed in headers)')}`));
+  out.push(p ? T.kv('hosting', `${esc(p.name)} ${dim('(managed host)')}`) : T.dots('matching hosting provider', 'no match'));
+  if (p?.note) out.push(T.info(esc(p.note)));
+  for (const i of r.phpinfo) {
+    out.push(T.warn(`<a href="${esc(i.url)}">${esc(i.url)}</a> is a public phpinfo() page${i.version ? ` (PHP ${esc(i.version)})` : ''}. Delete it, it helps attackers.`));
+    if (i.uploadProgress) out.push(T.info(`session.upload_progress.enabled = ${esc(i.uploadProgress)}`));
   }
-  const notes = [];
-  if (p) notes.push(`Hosting: <b>${esc(p.name)}</b> (managed host)${p.note ? `. ${esc(p.note)}` : ''}`);
-  if (r.signals.length) notes.push(`PHP signals: ${esc(r.signals.join(', '))}`);
-  if (r.server) notes.push(`Server: ${esc(r.server)}`);
-  for (const warning of r.warnings || []) notes.push(esc(warning));
-  notes.push(`Scan coverage: <b>${esc(r.coverage || 'unknown')}</b>; evidence: ${esc(r.confidence || 'unknown')}; ${r.requests?.length || 0} GET requests.`);
-  for (const i of r.phpinfo) notes.push(`<b>Public phpinfo() page:</b> <a href="${esc(i.url)}">${esc(i.url)}</a>. Delete it, it gives attackers your exact setup.${i.uploadProgress ? ` (session.upload_progress.enabled = ${esc(i.uploadProgress)})` : ''}`);
-  if (r.verdict === 'vulnerable') notes.push('Ubuntu, Debian and RHEL packages can carry the fix without changing the version number. Run the server check to confirm.');
-  if (r.verdict === 'unknown' && !p) notes.push('Hiding the version is good practice. Run the server check below, or look in WordPress Site Health, to see the real version.');
-  if (r.verdict === 'no-php') notes.push('The site may still run PHP behind a proxy or cache. If it\'s WordPress, Laravel or another PHP app, run the server check.');
+  if (!r.phpinfo.length) out.push(T.dots('probing common phpinfo() paths', 'none exposed'));
+  for (const w of r.warnings || []) out.push(T.info(esc(w)));
+  out.push(T.kv('coverage', `${esc(r.coverage || 'unknown')} ${dim(`· evidence: ${esc(r.confidence || 'unknown')} · ${r.requests?.length || 0} GET requests`)}`));
+
+  out.push(T.hdr('02', 'Verdict'));
+  let cls = 'warn', summary = 'UNCONFIRMED :: version or scan coverage incomplete';
+  if (r.verdict === 'vulnerable') {
+    cls = 'bad'; summary = 'VULNERABLE :: patch PHP, then restart the workers';
+    out.push(T.bad(`${site} ${dim('::')} PHP ${esc(r.version)} <span class="t-bad">${r.eol ? 'end-of-life, no upstream fix' : 'VULNERABLE'}</span>${r.eol ? '' : ` (fixed in ${esc(r.fixedIn)})`}`));
+    out.push(T.info('Ubuntu, Debian and RHEL packages can carry the fix without changing the version number. Run the server check to confirm.'));
+  } else if (r.verdict === 'patched') {
+    cls = 'ok'; summary = 'NO VULNERABLE PHP FOUND :: stay patched';
+    out.push(T.ok(`${site} ${dim('::')} PHP ${esc(r.version)} <span class="t-ok">patched</span>`));
+  } else if (r.verdict === 'no-php') {
+    summary = 'NO PHP FINGERPRINTS :: PHP may still be present';
+    out.push(T.warn('No PHP fingerprints found. The site may still run PHP behind a proxy or cache: if it\'s WordPress, Laravel or another PHP app, run the server check.'));
+  } else if (p?.patched === 'no') {
+    // Provider status only fills in when the version itself is hidden; a visible version always wins.
+    cls = 'bad'; summary = 'VULNERABLE :: your host has not patched PHP yet';
+    out.push(T.bad(`Hosted on ${esc(p.name)}, which has NOT patched PHP yet${esc(when)}.`));
+  } else if (p) {
+    out.push(T.warn(p.patched === 'yes' ? `Hosted on ${esc(p.name)}, which reports patched PHP${esc(when)}. Confirm this site's pool with your host.`
+      : `PHP detected, version hidden. Hosted on ${esc(p.name)}: patch status not confirmed yet.`));
+  } else {
+    out.push(T.warn('PHP detected, but its version is hidden or the scan was incomplete. Run the server check, or look in WordPress Site Health, to see the real version.'));
+  }
+  if (r.verdict === 'unknown' && p?.link) out.push(T.info(`Status page: <a href="${esc(p.link)}">${esc(p.link)}</a>`));
+
+  const fix = cls !== 'ok' && r.verdict !== 'no-php';
+  if (fix) out.push(T.hdr('03', fixTitle(r)), `<div class="t-block">${fixes(r)}</div>`);
+  out.push(T.hdr(fix ? '04' : '03', 'Summary'), `<p class="t-block verdict ${cls}">${esc(summary)}</p>`);
+
   lastReport = r; $('#download').hidden = false;
-  $('#out').innerHTML = `<div class="card"><p class="verdict ${cls}">${esc(text)}</p>
-    <p class="muted">${esc(r.url)}</p><ul>${notes.map((n) => `<li>${n}</li>`).join('')}</ul>
-    ${r.verdict === 'patched' || r.verdict === 'no-php' || cls === 'ok' ? '' : fixes(r)}</div>`;
+  // --i staggers each line's appearance, like the script printing as it goes.
+  $('#out').innerHTML = out.map((h, i) => h.replace(/^<(div|p) class="/, `<$1 style="--i:${i}" class="`)).join('');
 }
 
 $('#f').addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = $('#u').value.trim();
   $('#download').hidden = true; lastReport = undefined;
-  $('#go').disabled = true; $('#go').textContent = 'Scanning…'; $('#out').innerHTML = '';
+  $('#go').disabled = true; $('#go').textContent = 'Scanning…';
+  $('#out').innerHTML = `<div class="t-line t-wait"><span class="t-spin"></span> connecting to ${esc(url)}...</div>`;
   try {
     if (!API) throw new Error('Web scanning is not configured for this installation. Use the command-line scanner below.');
     const res = await fetch(`${API}/?url=${encodeURIComponent(url)}`).catch(() => {
-      throw new Error(`Couldn't reach the scanner service at ${API}. Is the Worker deployed (or \`wrangler dev\` running)?`);
+      throw new Error('Couldn\'t reach the scanner. Try again in a minute, or use the command line below.');
     });
     const r = await res.json();
     if (r.error) throw new Error(r.error);
     r.provider = await provider(r);
     render(r);
   } catch (err) {
-    $('#out').innerHTML = `<div class="card"><p class="verdict warn">${esc(err.message || 'Scan failed')}</p></div>`;
+    $('#out').innerHTML = T.warn(esc(err.message || 'Scan failed'));
   } finally { $('#go').disabled = false; $('#go').textContent = 'Scan'; }
 });
 

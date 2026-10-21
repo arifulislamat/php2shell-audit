@@ -1,0 +1,32 @@
+# php2shell checker
+
+> Free, open-source, read-only checker for php2shell: CVE-2026-109618 and CVE-2026-109619, an unauthenticated remote code execution flaw in PHP itself. Fixed in PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35. PHP 8.1 and older get no upstream fix.
+
+Author: Ariful Islam (https://arifulislamat.com). License: MIT. Last updated: 2026-10-22.
+
+## Key facts
+
+- php2shell is CVE-2026-109618 and CVE-2026-109619, an unauthenticated remote code execution flaw in the PHP runtime.
+- Any site running a vulnerable PHP version is affected: WordPress, Laravel, Drupal, Joomla and custom PHP.
+- Fixed versions: PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35. PHP 8.1 and older: no upstream fix; upgrade to 8.2+ or use a vendor backport (Ubuntu Pro, Debian LTS, CloudLinux).
+- Updating WordPress, Laravel or plugins does not fix it. Only updating PHP does, followed by restarting PHP-FPM, Apache or LiteSpeed.
+- Apache mod_php is the highest-risk setup: the attack starts before any application code runs.
+- Ubuntu, Debian and RHEL may backport the fix without changing the PHP version number.
+- Interim mitigation (not a fix): in php.ini or the PHP-FPM pool set session.upload_progress.enabled = 0, plus fatal_error_backtraces = 0 on PHP 8.5; for CVE-2026-109618 a non-overridable memory_limit = -1 with container memory limits and post_max_size = 8M. A WAF such as Cloudflare reduces exposure but is not a fix.
+- Advisories: https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w and https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp
+
+## How to check
+
+1. On the server (most accurate: PHP builds, distro backports, containers, signs of compromise):
+   `curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash`
+2. From any computer, against a website:
+   `curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | bash -s -- https://example.com`
+3. In the browser: https://arifulislamat.github.io/php2shell-audit/
+
+The checker sends no exploit payloads and changes nothing. Exit codes: 0 nothing found, 1 vulnerable PHP, 2 possible compromise, 3 site unreachable, 4 PHP found but version unconfirmed.
+
+## Links
+
+- [Web checker](https://arifulislamat.github.io/php2shell-audit/): scan a site in the browser
+- [Source code](https://github.com/arifulislamat/php2shell-audit): check.sh, README and Cloudflare Worker
+- [Write-up](https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla): is your WordPress, Laravel or PHP site affected, and how to patch
