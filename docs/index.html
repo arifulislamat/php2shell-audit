@@ -488,7 +488,6 @@ $('#f').addEventListener('submit', async (e) => {
   $('#go').disabled = true; $('#go').textContent = 'Scanning…';
   $('#out').innerHTML = `<div class="t-line t-wait"><span class="t-spin"></span> connecting to ${esc(url)}...</div>`;
   try {
-    if (!API) throw new Error('Web scanning is not configured for this installation. Use the command-line scanner below.');
     const res = await fetch(`${API}/?url=${encodeURIComponent(url)}`).catch(() => {
       throw new Error('Couldn\'t reach the scanner. Try again in a minute, or use the command line below.');
     });
@@ -507,10 +506,6 @@ $('#download').addEventListener('click', () => {
   const a = Object.assign(document.createElement('a'), { href: url, download: 'php2shell-report.json' });
   a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
-if (!API) {
-  $('#out').textContent = 'Browser scans are not configured on this installation. The CLI commands below work independently.';
-  $('#go').disabled = true;
-}
 
 document.querySelectorAll('.copy').forEach((d) => {
   const b = Object.assign(document.createElement('button'), { textContent: 'Copy', type: 'button' });

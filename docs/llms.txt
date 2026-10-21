@@ -22,6 +22,7 @@ Author: Ariful Islam (https://arifulislamat.com). License: MIT. Last updated: 20
 2. From any computer, against a website:
    `curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | bash -s -- https://example.com`
 3. In the browser: https://arifulislamat.github.io/php2shell-audit/
+   The browser scanner is live and needs nothing installed or configured. A hosted Cloudflare Worker reads the target site's headers, because browsers can't read another site's headers themselves.
 
 The checker sends no exploit payloads and changes nothing. Exit codes: 0 nothing found, 1 vulnerable PHP, 2 possible compromise, 3 site unreachable, 4 PHP found but version unconfirmed.
 
