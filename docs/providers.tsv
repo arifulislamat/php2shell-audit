@@ -1,0 +1,10 @@
+# name	header_regex	host_regex	patched	checked	link	note
+WordPress VIP	^x-powered-by: wordpress vip	\.go-vip\.(net|co)$	unknown		https://wpvipstatus.com/	
+WordPress.com	^host-header: wordpress\.com	\.wordpress\.com$	unknown		https://automatticstatus.com/	
+WP Engine	^x-powered-by: wp engine|^wpe-backend:	\.(wpengine|wpenginepowered|flywheelsites)\.com$	unknown		https://wpenginestatus.com/	Includes Flywheel.
+Kinsta	^x-kinsta-|^ki-cache-type:	\.kinsta\.cloud$	unknown		https://status.kinsta.com/	
+SiteGround	^x-proxy-cache-info:	\.sg-host\.com$	unknown			
+Pantheon	^x-pantheon-	\.pantheonsite\.io$	unknown		https://status.pantheon.io/	
+Acquia	^x-ah-environment:	\.acquia-sites\.com$	unknown		https://status.acquia.com/	
+Upsun / Platform.sh	^x-platform-(cluster|router|processor):	\.platformsh\.site$	unknown		https://status.upsun.com/	
+Cloudways		\.cloudwaysapps\.com$	unknown		https://status.cloudways.com/	Detected by its temporary domain only; custom domains behind Cloudflare are not recognised.

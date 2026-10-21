@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>php2shell checker</title>
+<meta name="description" content="Check whether your PHP, WordPress or Laravel site is exposed to php2shell (CVE-2026-109618 / CVE-2026-109619).">
+<style>
+  :root { --bg: #f7f7f5; --card: #fff; --fg: #1d1d1b; --muted: #5f5f5a; --line: #e2e2dc; --accent: #4f5bd5;
+          --bad: #c0362c; --bad-bg: #fdecea; --ok: #23784a; --ok-bg: #e7f5ec; --warn: #9a6200; --warn-bg: #fff4dc; --code: #f0f0ec; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151514; --card: #1e1e1c; --fg: #ececea; --muted: #a3a39d; --line: #33332f; --accent: #8f98ff;
+            --bad: #ff8a80; --bad-bg: #3a1e1b; --ok: #7fd6a0; --ok-bg: #18301f; --warn: #ffc864; --warn-bg: #352a12; --code: #2a2a27; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 1.9rem; margin: 0 0 4px; } h2 { font-size: 1.15rem; margin: 32px 0 8px; }
+  p { margin: 8px 0; } .muted { color: var(--muted); } a { color: var(--accent); }
+  form { display: flex; gap: 8px; margin: 24px 0 8px; flex-wrap: wrap; }
+  input { flex: 1 1 260px; padding: 12px 14px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); }
+  button { padding: 12px 20px; font: inherit; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-top: 16px; }
+  .verdict { font-weight: 700; font-size: 1.1rem; padding: 10px 14px; border-radius: 8px; margin: 0 0 12px; }
+  .bad { background: var(--bad-bg); color: var(--bad); } .ok { background: var(--ok-bg); color: var(--ok); } .warn { background: var(--warn-bg); color: var(--warn); }
+  ul, ol { padding-left: 22px; margin: 8px 0; } li { margin: 4px 0; }
+  code, pre { font: 0.88rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code); border-radius: 6px; }
+  code { padding: 1px 5px; } pre { padding: 12px 14px; overflow-x: auto; margin: 8px 0; white-space: pre; }
+  .copy { position: relative; } .copy button { position: absolute; top: 6px; right: 6px; padding: 4px 10px; font-size: .8rem; }
+  table { border-collapse: collapse; width: 100%; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  .gh { display: inline-flex; color: var(--fg); padding: 6px; border-radius: 8px; } .gh:hover { color: var(--accent); }
+  .gh svg { width: 28px; height: 28px; fill: currentColor; }
+  footer { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>php2shell checker</h1>
+    <a class="gh" href="https://github.com/arifulislamat/php2shell" aria-label="php2shell on GitHub" title="View on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+    </a>
+  </div>
+  <p class="muted">CVE-2026-109618 / CVE-2026-109619: unauthenticated remote code execution in PHP itself. Every PHP site is in scope: WordPress, Laravel, Drupal, Joomla and custom code.
+    <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Read the full write-up</a>.</p>
+
+  <form id="f">
+    <label for="u" class="muted" style="flex-basis:100%">Website address</label>
+    <input id="u" type="text" inputmode="url" placeholder="example.com" autocomplete="url" required>
+    <button id="go">Scan</button>
+  </form>
+  <p class="muted" style="font-size:.9rem">Passive check: it reads public headers and a few common <code>phpinfo</code> URLs. It sends no exploit payloads and stores nothing.</p>
+  <div id="out" aria-live="polite"></div>
+
+  <h2>Fixed PHP versions</h2>
+  <table>
+    <tr><th>Branch</th><th>Patched in</th></tr>
+    <tr><td>8.5</td><td>8.5.12</td></tr><tr><td>8.4</td><td>8.4.27</td></tr>
+    <tr><td>8.3</td><td>8.3.36</td></tr><tr><td>8.2</td><td>8.2.35</td></tr>
+    <tr><td>8.1 and older</td><td>No upstream fix. Upgrade to 8.2+ or use a vendor backport.</td></tr>
+  </table>
+  <p class="muted">Source: <a href="https://www.php.net/">php.net</a>, advisories
+    <a href="https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w">GHSA-w8hw-w9fx-j79w</a> and
+    <a href="https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp">GHSA-6wmf-4rv5-p3rp</a>.</p>
+
+  <h2>Deeper check: run it on your server</h2>
+  <p>A website scan can't see distro backports, Docker containers or signs of an attack. Run this on the server (read-only, changes nothing):</p>
+  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | sudo bash</pre></div>
+  <p>Or scan a site from your own computer:</p>
+  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | bash -s -- https://example.com</pre></div>
+  <p class="muted">Shared hosting with no SSH? In WordPress, open <b>Tools → Site Health → Info → Server</b> to see the PHP version, or ask your host.</p>
+</main>
+<footer>
+  Built by <a href="https://arifulislamat.com">Ariful Islam</a> ·
+  <a href="https://github.com/arifulislamat/php2shell">Source on GitHub</a> ·
+  <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Write-up</a>
+</footer>
+<script>
+// Set this to your deployed Worker URL (see worker/ in the repo). Local testing uses `wrangler dev`.
+const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://php2shell-check.YOUR-SUBDOMAIN.workers.dev';
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const SERVER_CMD = 'curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | sudo bash';
+
+// First row of providers.tsv whose header or hostname pattern matches (same rules as check.sh).
+async function provider(r) {
+  try {
+    const tsv = await (await fetch('providers.tsv', { cache: 'no-store' })).text();
+    const lines = Object.entries(r.headers || {}).map(([k, v]) => `${k}: ${v}`);
+    const host = new URL(r.url).hostname;
+    for (const row of tsv.split('\n')) {
+      if (!row.trim() || row.startsWith('#')) continue;
+      const [name, hre, hostre, patched, checked, link, note] = row.split('\t');
+      if ((hre && lines.some((l) => new RegExp(hre, 'i').test(l))) || (hostre && new RegExp(hostre, 'i').test(host))) {
+        return { name, patched, checked, link, note };
+      }
+    }
+  } catch { /* no provider info is fine */ }
+}
+
+function fixes(r) {
+  const p = r.provider;
+  if (p) {
+    return `<h3>${r.verdict === 'unknown' ? 'What to do' : 'How to fix'}</h3><ol>
+      <li>${esc(p.name)} manages PHP for you, so you can't patch it yourself. Ask their support whether your site's PHP includes the fixes for <b>CVE-2026-109618 / CVE-2026-109619</b> (PHP 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35 or a backport).</li>
+      ${p.link ? `<li>Watch their status page: <a href="${esc(p.link)}">${esc(p.link)}</a></li>` : ''}
+      <li>If their dashboard lets you choose the PHP version, pick a patched branch once it's offered.</li>
+      <li>Check the version your site runs: WordPress → <b>Tools → Site Health → Info → Server</b>.</li></ol>
+      <p><b>Updating WordPress, Laravel or plugins does not fix this.</b> Only the PHP runtime does.</p>`;
+  }
+  const steps = [
+    'Back up files and database.',
+    `Update PHP to <b>8.5.12 / 8.4.27 / 8.3.36 / 8.2.35</b> or newer. VPS: <code>sudo apt update &amp;&amp; sudo apt upgrade</code> (or <code>dnf upgrade 'php*'</code>). Docker: rebuild from a patched image tag. Shared hosting / Forge / cPanel / Plesk: use their PHP update, or ask your host.`,
+    r.eol ? 'PHP 8.1 and older get no upstream fix: move to 8.2+, or use your vendor\'s backport (Ubuntu Pro, Debian LTS, CloudLinux...).' : '',
+    'Restart PHP workers (<code>sudo systemctl restart php8.x-fpm</code>, or Apache for mod_php). Until they restart, the old code keeps running.',
+    `Confirm on the server: <code>${esc(SERVER_CMD)}</code>`,
+  ].filter(Boolean);
+  return `<h3>${r.verdict === 'unknown' ? 'If your PHP is older than the versions above' : 'How to fix'}</h3><ol>${steps.map((s) => `<li>${s}</li>`).join('')}</ol>
+    <p><b>Updating WordPress, Laravel or plugins does not fix this.</b> Only the PHP runtime does.</p>
+    <p><b>Can't patch yet?</b> Interim mitigation, not a fix: in <code>php.ini</code> or the FPM pool (not <code>ini_set()</code> or <code>.user.ini</code>) set
+      <code>session.upload_progress.enabled = 0</code>, plus <code>fatal_error_backtraces = 0</code> on PHP 8.5; for CVE-2026-109618 a non-overridable <code>memory_limit = -1</code>
+      with container memory limits and <code>post_max_size = 8M</code>. Restart all workers and keep your WAF on.</p>`;
+}
+
+function render(r) {
+  const verdicts = {
+    vulnerable: ['bad', r.eol ? `Vulnerable: PHP ${r.version} is end-of-life and has no upstream fix` : `Likely vulnerable: PHP ${r.version} (fixed in ${r.fixedIn})`],
+    patched: ['ok', `Patched: PHP ${r.version}`],
+    unknown: ['warn', 'PHP detected, version hidden. Can\'t tell from outside'],
+    'no-php': ['ok', 'No PHP fingerprints found'],
+  };
+  let [cls, text] = verdicts[r.verdict];
+  const p = r.provider, when = p?.checked ? ` (checked ${p.checked})` : '';
+  // Provider status only fills in when the version itself is hidden; a visible version always wins.
+  if (p && r.verdict === 'unknown') {
+    if (p.patched === 'yes') [cls, text] = ['ok', `Hosted on ${p.name}, which reports its PHP is patched${when}`];
+    else if (p.patched === 'no') [cls, text] = ['bad', `Hosted on ${p.name}, which has not patched PHP yet${when}`];
+    else text = `PHP detected, version hidden. Hosted on ${p.name}: patch status not confirmed yet`;
+  }
+  const notes = [];
+  if (p) notes.push(`Hosting: <b>${esc(p.name)}</b> (managed host)${p.note ? `. ${esc(p.note)}` : ''}`);
+  if (r.signals.length) notes.push(`PHP signals: ${esc(r.signals.join(', '))}`);
+  if (r.server) notes.push(`Server: ${esc(r.server)}`);
+  if (r.cloudflare) notes.push('Behind Cloudflare: its WAF rules for this attack are live. That helps, but it is not a fix.');
+  for (const i of r.phpinfo) notes.push(`<b>Public phpinfo() page:</b> <a href="${esc(i.url)}">${esc(i.url)}</a>. Delete it, it gives attackers your exact setup.${i.uploadProgress ? ` (session.upload_progress.enabled = ${esc(i.uploadProgress)})` : ''}`);
+  if (r.verdict === 'vulnerable') notes.push('Ubuntu, Debian and RHEL packages can carry the fix without changing the version number. Run the server check to confirm.');
+  if (r.verdict === 'unknown' && !p) notes.push('Hiding the version is good practice. Run the server check below, or look in WordPress Site Health, to see the real version.');
+  if (r.verdict === 'no-php') notes.push('The site may still run PHP behind a proxy or cache. If it\'s WordPress, Laravel or another PHP app, run the server check.');
+  $('#out').innerHTML = `<div class="card"><p class="verdict ${cls}">${esc(text)}</p>
+    <p class="muted">${esc(r.url)}</p><ul>${notes.map((n) => `<li>${n}</li>`).join('')}</ul>
+    ${r.verdict === 'patched' || r.verdict === 'no-php' || cls === 'ok' ? '' : fixes(r)}</div>`;
+}
+
+$('#f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const url = $('#u').value.trim();
+  $('#go').disabled = true; $('#go').textContent = 'Scanning…'; $('#out').innerHTML = '';
+  try {
+    const res = await fetch(`${API}/?url=${encodeURIComponent(url)}`).catch(() => {
+      throw new Error(`Couldn't reach the scanner service at ${API}. Is the Worker deployed (or \`wrangler dev\` running)?`);
+    });
+    const r = await res.json();
+    if (r.error) throw new Error(r.error);
+    r.provider = await provider(r);
+    render(r);
+  } catch (err) {
+    $('#out').innerHTML = `<div class="card"><p class="verdict warn">${esc(err.message || 'Scan failed')}</p></div>`;
+  } finally { $('#go').disabled = false; $('#go').textContent = 'Scan'; }
+});
+
+document.querySelectorAll('.copy').forEach((d) => {
+  const b = Object.assign(document.createElement('button'), { textContent: 'Copy', type: 'button' });
+  b.onclick = () => navigator.clipboard.writeText(d.querySelector('pre').textContent).then(() => { b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1500); });
+  d.append(b);
+});
+</script>
+</body>
+</html>
