@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # php2shell checker: CVE-2026-109618 / CVE-2026-109619
-# by Ariful Islam · https://arifulislamat.com · https://github.com/arifulislamat/php2shell
+# by Ariful Islam · https://arifulislamat.com · https://github.com/arifulislamat/php2shell-audit
 #
 # On your server (checks PHP binaries, mod_php, Docker/Podman, signs of compromise):
-#   curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash
 # From any machine, against a website (passive fingerprinting):
-#   curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | bash -s -- https://example.com
+#   curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | bash -s -- https://example.com
 #
 # Read-only: changes nothing and sends no exploit payloads.
 # Exit codes: 0 = nothing found, 1 = vulnerable PHP, 2 = possible compromise, 3 = site unreachable,
@@ -13,9 +13,10 @@
 # Set WEBROOTS="/path/one /path/two" to scan custom web roots. NO_COLOR=1 turns off colors and animation.
 
 SINCE=2026-10-19 # the day before exploit details leaked
-UA="php2shell-check/1.0 (+https://github.com/arifulislamat/php2shell)"
-PROVIDERS_URL=https://raw.githubusercontent.com/arifulislamat/php2shell/main/docs/providers.tsv
-VULN=0 IOC=0 EOL=0 UPLOAD_ON=0 UNCONFIRMED=0 TMP=''
+UA="php2shell-check/1.0 (+https://github.com/arifulislamat/php2shell-audit)"
+PROVIDERS_URL=https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/docs/providers.tsv
+VULN=0 IOC=0 EOL=0 UPLOAD_ON=0 UNCONFIRMED=0 RUNTIMES=0 TMP=''
+JSON=0 EVENTS='' MODE='' rc=0
 
 # ── look & feel ──────────────────────────────────────────────────────────────
 # Colors and spinners only on a real terminal, so logs and CI output stay clean.
@@ -52,16 +53,38 @@ endtask() {
 }
 dots() { local n=$((52 - ${#1})); [ $n -lt 2 ] && n=2; printf '  [%s OK %s] %s %s%s%s %s%s%s\n' "$G" "$N" "$1" "$D" "$(printf '.%.0s' $(seq $n))" "$N" "$G" "$2" "$N"; }
 
-ok()    { out "  [${G} OK ${N}] $*"; }
-warn()  { out "  [${Y}WARN${N}] $*"; }
-bad()   { out "  [${R}${B}VULN${N}] $*"; VULN=1; }
-ioc()   { out "  [${P}${B}PWN?${N}] $*"; IOC=1; }
-kv()    { out "  [${C} >> ${N}] $(printf '%-12s' "$1")${D}::${N} $2"; }
-info()  { out "         ${D}│${N} $*"; }
+# Structured findings for --json. No external JSON utility required (Bash 3.2+).
+json_escape() {
+  local text=$1
+  text=${text//\\/\\\\}; text=${text//\"/\\\"}
+  text=${text//$'\n'/\\n}; text=${text//$'\r'/\\r}; text=${text//$'\t'/\\t}
+  # Other control characters are not useful evidence and cannot appear literally in JSON.
+  printf '%s' "$text" | LC_ALL=C tr -d '\000-\010\013\014\016-\037\177'
+}
+record() {
+  [ "$JSON" = 1 ] || return 0
+  EVENTS="${EVENTS}${EVENTS:+,}{\"severity\":\"$1\",\"message\":\"$(json_escape "$2")\"}"
+}
+finish() {
+  local code=$?
+  spin_off
+  [ "$FX" = 1 ] && printf '\033[?25h'
+  [ -n "$TMP" ] && rm -rf "$TMP"
+  if [ "$JSON" = 1 ]; then
+    printf '{"schema":"php2shell.check/1","mode":"%s","exitCode":%s,"since":"%s","findings":[%s]}\n' "$MODE" "$code" "$SINCE" "$EVENTS" >&3
+  fi
+}
+
+ok()    { record ok "$*"; out "  [${G} OK ${N}] $*"; }
+warn()  { record warning "$*"; out "  [${Y}WARN${N}] $*"; }
+bad()   { record vulnerable "$*"; out "  [${R}${B}VULN${N}] $*"; VULN=1; }
+ioc()   { record possible-compromise "$*"; out "  [${P}${B}PWN?${N}] $*"; IOC=1; }
+kv()    { record evidence "$1: $2"; out "  [${C} >> ${N}] $(printf '%-12s' "$1")${D}::${N} $2"; }
+info()  { record detail "$*"; out "         ${D}│${N} $*"; }
 list()  { local l; while IFS= read -r l; do info "$l"; done < <(printf '%s\n' "$1" | head -"${2:-20}"); }
 stepn() { out "  ${C}${B}[$1]${N} $2"; }
-cmd()   { out "       ${G}\$ $*${N}"; }
-cfg()   { out "       ${C}$(printf '%-38s' "$1")${N}${D}$2${N}"; }
+cmd()   { record recommendation "$*"; out "       ${G}\$ $*${N}"; }
+cfg()   { record recommendation "$*"; out "       ${C}$(printf '%-38s' "$1")${N}${D}$2${N}"; }
 note()  { out "       ${D}$*${N}"; }
 
 hdr() {
@@ -86,7 +109,7 @@ banner() {
 ╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝
 ART
   printf '  %s░▒▓%s %sPHP CORE RCE CHECKER%s %s▓▒░%s  %sCVE-2026-109618 · CVE-2026-109619%s\n' "$P" "$N" "$B" "$N" "$P" "$N" "$C" "$N"
-  printf '  %scoded by%s %sAriful Islam%s %s·%s arifulislamat.com %s·%s github.com/arifulislamat/php2shell\n\n' "$D" "$N" "$V$B" "$N" "$D" "$N" "$D" "$N"
+  printf '  %scoded by%s %sAriful Islam%s %s·%s arifulislamat.com %s·%s github.com/arifulislamat/php2shell-audit\n\n' "$D" "$N" "$V$B" "$N" "$D" "$N" "$D" "$N"
 }
 
 typeit() {
@@ -107,19 +130,19 @@ verdict_box() {
 # ── checks ───────────────────────────────────────────────────────────────────
 # Prints "patched", "eol" or "vulnerable:<fixed version>" for a version like 8.3.6 or 8.6.0RC3.
 php_status() {
-  local maj min pat pre fix
-  IFS=. read -r maj min pat <<<"$1"
-  pre=${pat#"${pat%%[!0-9]*}"}; pat=${pat%%[!0-9]*}
+  local maj min pat pre fix re
+  re='^([0-9]+)\.([0-9]+)\.([0-9]+)(-?([Aa][Ll][Pp][Hh][Aa]|[Bb][Ee][Tt][Aa]|[Rr][Cc])[0-9]+)?([-+~].*)?$'
+  [[ "$1" =~ $re ]] || { echo unknown; return; }
+  maj=${BASH_REMATCH[1]}; min=${BASH_REMATCH[2]}; pat=${BASH_REMATCH[3]}; pre=${BASH_REMATCH[4]}
   case "$maj.$min" in
     8.5) fix=12 ;; 8.4) fix=27 ;; 8.3) fix=36 ;; 8.2) fix=35 ;;
-    8.6) case $pre in *alpha*|*beta*|*RC[1-3]) echo vulnerable:8.6.0RC4 ;; *) echo patched ;; esac; return ;;
+    8.6) case $(printf '%s' "$pre" | tr '[:upper:]' '[:lower:]') in *alpha*|*beta*|*rc[1-3]) echo vulnerable:8.6.0RC4 ;; *) echo patched ;; esac; return ;;
     *) if [ "$maj" -gt 8 ] || { [ "$maj" -eq 8 ] && [ "$min" -gt 6 ]; }; then echo patched; else echo eol; fi; return ;;
   esac
-  # A pre-release of the fixed version (e.g. 8.3.36RC1) predates the fix.
-  if [ "${pat:-0}" -gt "$fix" ] || { [ "${pat:-0}" -eq "$fix" ] && [ -z "$pre" ]; }; then echo patched; else echo "vulnerable:$maj.$min.$fix"; fi
+  if [ "$pat" -gt "$fix" ] || { [ "$pat" -eq "$fix" ] && [ -z "$pre" ]; }; then echo patched; else echo "vulnerable:$maj.$min.$fix"; fi
 }
 
-# True if the distro package owning $1 lists both CVEs in its changelog (fix backported, version number unchanged).
+# True if the installed distro package owning $1 lists both CVEs in its changelog (fix backported, version number unchanged).
 backported() {
   local pkg log=
   if command -v dpkg >/dev/null 2>&1 && pkg=$(dpkg -S "$1" 2>/dev/null | head -1 | cut -d: -f1) && [ -n "$pkg" ]; then
@@ -135,8 +158,9 @@ ver_of() { grep -aoE 'X-Powered-By: PHP/[0-9]+\.[0-9]+\.[0-9]+(-?(alpha|beta|RC)
 
 # judge <label> <version> [file used for the backport lookup]
 judge() {
-  local s; s=$(php_status "$2")
+  local s; s=$(php_status "$2"); RUNTIMES=$((RUNTIMES + 1))
   case $s in
+    unknown) warn "$1 :: PHP $2 has no verified version rule; confirm against the advisory."; UNCONFIRMED=1 ;;
     patched) ok "$1 ${D}::${N} PHP $2 ${G}patched${N}" ;;
     *) if [ -n "$3" ] && backported "$3"; then ok "$1 ${D}::${N} PHP $2 ${G}distro build, fix backported${N}"
        elif [ "$s" = eol ]; then bad "$1 ${D}::${N} PHP $2 ${R}end-of-life, no upstream fix${N} (upgrade to 8.2+ or use a vendor backport)"; EOL=1
@@ -213,7 +237,9 @@ server() {
     done < <($rt ps --format '{{.ID}} {{.Names}} {{.Image}}')
   done
 
-  hdr "Signs of compromise since $SINCE"
+  [ "$RUNTIMES" -gt 0 ] || { warn "No PHP runtime could be inspected; this does not establish that the server is safe."; UNCONFIRMED=1; }
+
+  hdr "Signs of compromise (file-change window: $SINCE)"
   local roots
   roots=${WEBROOTS:-$(ls -d /var/www /srv/www /srv/http /usr/share/nginx/html /home/*/public_html /home/*/domains \
                            /home/*/htdocs /home/*/web /opt/bitnami/wordpress /www/wwwroot 2>/dev/null)}
@@ -278,7 +304,7 @@ server() {
     [ -n "$out" ] && { warn "Outbound connections from PHP/web processes (DB and API calls are normal, unknown IPs are not):"; list "$out"; }
   fi
 
-  task "parsing PHP and web server logs"
+  task "parsing available logs (all retained dates)"
   local f n
   for f in /var/log/php*fpm*.log /var/log/php-fpm/*.log /var/log/nginx/error.log /var/log/apache2/error.log \
       /var/log/httpd/error_log /usr/local/lsws/logs/error.log /opt/cpanel/ea-php*/root/usr/var/log/php-fpm.log; do
@@ -297,21 +323,25 @@ server() {
 }
 
 remote() {
-  local url=$1 origin H v s p php='' app='' host pv='' name hre hostre patched checked link note srv
+  local url=$1 origin H v s observed p php='' app='' host pv='' name hre hostre patched checked link note srv
   case $url in http://*|https://*) ;; *) url="https://$url" ;; esac
   origin=$(printf '%s' "$url" | grep -oE '^https?://[^/]+')
   TMP=$(mktemp -d)
-  get() { curl -sSL -m 15 -A "$UA" -D "$TMP/h" -o "$TMP/b" "$1" 2>/dev/null; }
+  get() { curl -sSL --proto '=http,https' --proto-redir '=http,https' --max-redirs 4 -m 15 -A "$UA" -D "$TMP/h" -o "$TMP/b" -w '%{url_effective}' "$1" >"$TMP/e" 2>/dev/null; }
 
   hdr "Recon"
   task "connecting to $origin" "online"
   get "$url" || { bad "Could not reach $url"; exit 3; }
+  # Headers of every hop: a PHP redirect can expose the version that the final page hides.
   H=$(tr -d '\r' <"$TMP/h")
+  origin=$(grep -oE '^https?://[^/]+' "$TMP/e")
+  s=$(echo "$H" | awk '/^HTTP\// {code=$2} END {print code}')
+  if [ "${s:-0}" -ge 400 ]; then warn "Main page returned HTTP $s; coverage is incomplete."; UNCONFIRMED=1; fi
 
   task "fingerprinting response headers"
   srv=$(echo "$H" | grep -i '^server:' | tail -1 | cut -d' ' -f2-)
   kv "server" "${srv:-hidden}"
-  echo "$H" | grep -qi '^cf-ray:' && kv "waf" "Cloudflare: its rules for this attack are live (a mitigation, not a fix)"
+  echo "$H" | grep -qi '^cf-ray:' && kv "waf" "Cloudflare detected; WAF rule activation and origin protection cannot be verified from headers"
   v=$(echo "$H" | grep -iE '^x-powered-by:.*PHP/' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-?(alpha|beta|RC)[0-9]+)?' | tail -1)
   echo "$H" | grep -qiE '^x-powered-by:.*php' && php="X-Powered-By header"
   echo "$H" | grep -qiE '^set-cookie:[[:space:]]*(PHPSESSID|laravel_session)=' && php="${php:+$php, }PHP session cookie"
@@ -335,9 +365,19 @@ remote() {
 
   task "probing common phpinfo() paths" "none exposed"
   for p in phpinfo.php info.php php_info.php i.php test.php; do
-    get "$origin/$p" && grep -q 'phpinfo()' "$TMP/b" || continue
-    s=$(grep -oE 'PHP Version [0-9]+\.[0-9]+\.[0-9]+(-?(alpha|beta|RC)[0-9]+)?' "$TMP/b" | head -1 | cut -d' ' -f3)
-    warn "$origin/$p is a public phpinfo() page${s:+ (PHP $s)}. Delete it, it helps attackers."
+    get "$origin/$p" || { warn "Could not inspect $origin/$p"; UNCONFIRMED=1; continue; }
+    s=$(tr -d '\r' <"$TMP/h" | awk '/^HTTP\// {code=$2} END {print code}')
+    if [ "$s" = 429 ]; then warn "Rate limited; stopping probes."; UNCONFIRMED=1; break; fi
+    if [ "${s:-0}" -ge 500 ]; then warn "HTTP $s at $origin/$p"; UNCONFIRMED=1; fi
+    [ "${s:-0}" -ge 200 ] && [ "${s:-0}" -lt 300 ] || continue
+    # Both markers, so a catch-all 200 page that merely mentions phpinfo() isn't reported.
+    grep -q 'phpinfo()' "$TMP/b" && grep -qE 'PHP Version [0-9]' "$TMP/b" || continue
+    observed=$(grep -oE 'PHP Version [0-9]+\.[0-9]+\.[0-9]+(-?(alpha|beta|RC)[0-9]+)?' "$TMP/b" | head -1 | cut -d' ' -f3)
+    warn "$origin/$p is a public phpinfo() page${observed:+ (PHP $observed)}. Delete it, it helps attackers."
+    if [ -n "$observed" ] && [ -n "$v" ] && [ "$observed" != "$v" ]; then
+      warn "Conflicting PHP versions: header/previous page $v; $origin/$p $observed. Check every backend."
+      judge "$origin/$p" "$observed"
+    fi
     s=$(grep -oE 'session\.upload_progress\.enabled</td><td class="v">[^<]*' "$TMP/b" | head -1 | sed 's/.*>//')
     [ -n "$s" ] && info "session.upload_progress.enabled = $s"
     [ "$s" = On ] && UPLOAD_ON=1
@@ -351,7 +391,7 @@ remote() {
     [ $VULN = 1 ] && info "Ubuntu/Debian/RHEL packages can carry the fix without changing the version number. Run the server check to confirm."
   elif [ -n "$php" ] && [ -n "$pv" ]; then
     case $patched in
-      yes) ok "Hosted on $pv, which reports its PHP is patched${checked:+ (checked $checked)}." ;;
+      yes) warn "Hosted on $pv, which reports patched PHP${checked:+ (checked $checked)}. Confirm this site and pool with your host."; UNCONFIRMED=1 ;;
       no) bad "Hosted on $pv, which has NOT patched PHP yet${checked:+ (checked $checked)}." ;;
       *) warn "PHP detected ($php), version hidden. Hosted on $pv: patch status not confirmed yet."; UNCONFIRMED=1 ;;
     esac
@@ -368,7 +408,7 @@ remote() {
     out ""
     if [ -z "$pv" ]; then
       note "server check (real version, Docker containers, signs of compromise):"
-      cmd "curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | sudo bash"
+      cmd "curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash"
     fi
     note "shared hosting without SSH: WordPress → Tools → Site Health → Info → Server shows the PHP version."
   fi
@@ -432,15 +472,46 @@ fixes() {
 # ── main ─────────────────────────────────────────────────────────────────────
 while [ "$1" = -s ] || [ "$1" = -- ]; do shift; done # tolerate `bash check.sh -s -- URL`
 
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --json) JSON=1; shift ;;
+    --since)
+      [[ "$2" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "--since requires YYYY-MM-DD" >&2; exit 64; }
+      year=$((10#${2:0:4})); month=$((10#${2:5:2})); day=$((10#${2:8:2})); days=31
+      case "$month" in
+        4|6|9|11) days=30 ;;
+        2) days=28; if (( year % 400 == 0 || (year % 4 == 0 && year % 100 != 0) )); then days=29; fi ;;
+      esac
+      if (( year < 1970 || month < 1 || month > 12 || day < 1 || day > days )); then echo 'Invalid investigation date' >&2; exit 64; fi
+      SINCE=$2; shift 2 ;;
+    --help|-h)
+      printf '%s\n' 'Usage: bash check.sh [--json] [--since YYYY-MM-DD] [URL]' \
+        'No URL: local server audit. URL: passive remote fingerprinting.' \
+        '--json: structured findings on stdout; progress on stderr.' \
+        '--since: file/admin change window; logs cover all retained dates.' \
+        'Exit: 0 no findings; 1 affected version; 2 possible compromise; 3 unreachable; 4 incomplete; 64 usage.'
+      exit 0 ;;
+    --selftest) break ;;
+    --) shift; break ;;
+    -*) echo "Unknown option: $1" >&2; exit 64 ;;
+    *) break ;;
+  esac
+done
+[ "$#" -le 1 ] || { echo 'Expected at most one URL' >&2; exit 64; }
+if [ "$JSON" = 1 ]; then
+  FX=0 P='' V='' C='' G='' Y='' R='' D='' B='' N=''
+  exec 3>&1 1>&2
+fi
+
 if [ "$1" = --selftest ]; then
   for t in 8.5.11:vulnerable:8.5.12 8.5.12:patched 8.4.26:vulnerable:8.4.27 8.4.30:patched 8.3.6:vulnerable:8.3.36 \
-      8.3.36:patched 8.2.35:patched 8.1.31:eol 7.4.33:eol 5.4.45:eol 8.6.0RC3:vulnerable:8.6.0RC4 8.6.0RC4:patched 8.6.0:patched 8.7.1:patched 9.0.0:patched 8.3.36RC1:vulnerable:8.3.36 8.3.37RC1:patched; do
+      8.3.36:patched 8.2.35:patched 8.1.31:eol 7.4.33:eol 5.4.45:eol 8.6.0RC3:vulnerable:8.6.0RC4 8.6.0RC4:patched 8.6.0:patched 8.7.1:patched 9.0.0:patched invalid:unknown 8.3.36-1ubuntu1:patched 8.3.36RC1:vulnerable:8.3.36 8.3.37RC1:patched; do
     [ "$(php_status "${t%%:*}")" = "${t#*:}" ] || { echo "FAIL $t -> $(php_status "${t%%:*}")"; exit 1; }
   done
   echo "selftest ok"; exit 0
 fi
 
-trap 'spin_off; [ $FX = 1 ] && printf "\033[?25h"; [ -n "$TMP" ] && rm -rf "$TMP"' EXIT
+trap finish EXIT
 trap 'exit 130' INT TERM
 [ $FX = 1 ] && printf '\033[?25l' # hide the cursor while spinners run
 
@@ -454,7 +525,7 @@ fixes
 hdr "Summary"
 if [ $IOC = 1 ]; then verdict_box "$P" ">> POSSIBLE COMPROMISE :: treat it as an incident"; rc=2
 elif [ $VULN = 1 ]; then verdict_box "$R" ">> VULNERABLE :: patch PHP, then restart the workers"; rc=1
-elif [ $UNCONFIRMED = 1 ]; then verdict_box "$Y" ">> UNCONFIRMED :: PHP version hidden, check host/server"; rc=4
+elif [ $UNCONFIRMED = 1 ]; then verdict_box "$Y" ">> UNCONFIRMED :: version or scan coverage incomplete"; rc=4
 else verdict_box "$G" ">> NO VULNERABLE PHP FOUND :: stay patched"; rc=0; fi
 printf '\n  %s// php2shell by%s %sAriful Islam%s %s· https://arifulislamat.com%s\n\n' "$D" "$N" "$V" "$N" "$D" "$N"
 exit $rc

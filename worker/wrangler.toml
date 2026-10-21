@@ -1,3 +1,11 @@
 name = "php2shell-check"
 main = "worker.js"
 compatibility_date = "2026-10-01"
+
+# Optional deployment controls (include redirect hosts in ALLOWED_TARGETS):
+# [vars]
+# ALLOWED_ORIGIN = "https://arifulislamat.github.io"
+# ALLOWED_TARGETS = "example.com,www.example.com"
+#
+# An optional rate limiter binding named RATE_LIMITER is supported.
+# Configure it per https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/

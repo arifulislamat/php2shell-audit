@@ -16,7 +16,7 @@
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
   main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
   h1 { font-size: 1.9rem; margin: 0 0 4px; } h2 { font-size: 1.15rem; margin: 32px 0 8px; }
-  p { margin: 8px 0; } .muted { color: var(--muted); } a { color: var(--accent); }
+  p { margin: 8px 0; } .muted { color: var(--muted); } a { color: var(--accent); overflow-wrap: anywhere; }
   form { display: flex; gap: 8px; margin: 24px 0 8px; flex-wrap: wrap; }
   input { flex: 1 1 260px; padding: 12px 14px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); }
   button { padding: 12px 20px; font: inherit; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
@@ -27,7 +27,7 @@
   .bad { background: var(--bad-bg); color: var(--bad); } .ok { background: var(--ok-bg); color: var(--ok); } .warn { background: var(--warn-bg); color: var(--warn); }
   ul, ol { padding-left: 22px; margin: 8px 0; } li { margin: 4px 0; }
   code, pre { font: 0.88rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code); border-radius: 6px; }
-  code { padding: 1px 5px; } pre { padding: 12px 14px; overflow-x: auto; margin: 8px 0; white-space: pre; }
+  code { padding: 1px 5px; overflow-wrap: anywhere; } pre { padding: 12px 14px; overflow-x: auto; margin: 8px 0; white-space: pre; }
   .copy { position: relative; } .copy button { position: absolute; top: 6px; right: 6px; padding: 4px 10px; font-size: .8rem; }
   table { border-collapse: collapse; width: 100%; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
   .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
@@ -40,11 +40,11 @@
 <main>
   <div class="top">
     <h1>php2shell checker</h1>
-    <a class="gh" href="https://github.com/arifulislamat/php2shell" aria-label="php2shell on GitHub" title="View on GitHub">
+    <a class="gh" href="https://github.com/arifulislamat/php2shell-audit" aria-label="php2shell on GitHub" title="View on GitHub">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
     </a>
   </div>
-  <p class="muted">CVE-2026-109618 / CVE-2026-109619: unauthenticated remote code execution in PHP itself. Every PHP site is in scope: WordPress, Laravel, Drupal, Joomla and custom code.
+  <p class="muted">CVE-2026-109618 / CVE-2026-109619: unauthenticated remote code execution in PHP itself. Assess the PHP runtime behind WordPress, Laravel, Drupal, Joomla and custom code.
     <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Read the full write-up</a>.</p>
 
   <form id="f">
@@ -54,6 +54,8 @@
   </form>
   <p class="muted" style="font-size:.9rem">Passive check: it reads public headers and a few common <code>phpinfo</code> URLs. It sends no exploit payloads and stores nothing.</p>
   <div id="out" aria-live="polite"></div>
+  <button id="download" type="button" hidden>Download JSON report</button>
+  <p class="muted">Reports separate reported PHP versions, incomplete checks and unknown results. A remote scan cannot certify a patch or rule out compromise.</p>
 
   <h2>Fixed PHP versions</h2>
   <table>
@@ -68,23 +70,24 @@
 
   <h2>Deeper check: run it on your server</h2>
   <p>A website scan can't see distro backports, Docker containers or signs of an attack. Run this on the server (read-only, changes nothing):</p>
-  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | sudo bash</pre></div>
+  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash</pre></div>
   <p>Or scan a site from your own computer:</p>
-  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | bash -s -- https://example.com</pre></div>
+  <div class="copy"><pre>curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | bash -s -- https://example.com</pre></div>
   <p class="muted">Shared hosting with no SSH? In WordPress, open <b>Tools → Site Health → Info → Server</b> to see the PHP version, or ask your host.</p>
 </main>
 <footer>
   Built by <a href="https://arifulislamat.com">Ariful Islam</a> ·
-  <a href="https://github.com/arifulislamat/php2shell">Source on GitHub</a> ·
+  <a href="https://github.com/arifulislamat/php2shell-audit">Source on GitHub</a> ·
   <a href="https://dev.to/arifulislamat/php2shell-is-your-wordpress-laravel-or-php-site-affected-how-to-patch-today-3jla">Write-up</a>
 </footer>
 <script>
 // Set this to your deployed Worker URL (see worker/ in the repo). Local testing uses `wrangler dev`.
-const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : 'https://php2shell-check.YOUR-SUBDOMAIN.workers.dev';
+const API = ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://localhost:8787' : ''; // Set your deployed Worker URL here.
+let lastReport;
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const SERVER_CMD = 'curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell/main/check.sh | sudo bash';
+const SERVER_CMD = 'curl -fsSL https://raw.githubusercontent.com/arifulislamat/php2shell-audit/main/check.sh | sudo bash';
 
 // First row of providers.tsv whose header or hostname pattern matches (same rules as check.sh).
 async function provider(r) {
@@ -129,15 +132,15 @@ function fixes(r) {
 function render(r) {
   const verdicts = {
     vulnerable: ['bad', r.eol ? `Vulnerable: PHP ${r.version} is end-of-life and has no upstream fix` : `Likely vulnerable: PHP ${r.version} (fixed in ${r.fixedIn})`],
-    patched: ['ok', `Patched: PHP ${r.version}`],
-    unknown: ['warn', 'PHP detected, version hidden. Can\'t tell from outside'],
-    'no-php': ['ok', 'No PHP fingerprints found'],
+    patched: ['ok', `Reported patched version: PHP ${r.version}`],
+    unknown: ['warn', 'Unconfirmed: version or scan coverage is incomplete'],
+    'no-php': ['warn', 'No PHP fingerprints found — PHP may still be present'],
   };
   let [cls, text] = verdicts[r.verdict];
   const p = r.provider, when = p?.checked ? ` (checked ${p.checked})` : '';
   // Provider status only fills in when the version itself is hidden; a visible version always wins.
   if (p && r.verdict === 'unknown') {
-    if (p.patched === 'yes') [cls, text] = ['ok', `Hosted on ${p.name}, which reports its PHP is patched${when}`];
+    if (p.patched === 'yes') [cls, text] = ['warn', `${p.name} reports patched PHP${when}; confirm this site's pool with the host`];
     else if (p.patched === 'no') [cls, text] = ['bad', `Hosted on ${p.name}, which has not patched PHP yet${when}`];
     else text = `PHP detected, version hidden. Hosted on ${p.name}: patch status not confirmed yet`;
   }
@@ -145,11 +148,13 @@ function render(r) {
   if (p) notes.push(`Hosting: <b>${esc(p.name)}</b> (managed host)${p.note ? `. ${esc(p.note)}` : ''}`);
   if (r.signals.length) notes.push(`PHP signals: ${esc(r.signals.join(', '))}`);
   if (r.server) notes.push(`Server: ${esc(r.server)}`);
-  if (r.cloudflare) notes.push('Behind Cloudflare: its WAF rules for this attack are live. That helps, but it is not a fix.');
+  for (const warning of r.warnings || []) notes.push(esc(warning));
+  notes.push(`Scan coverage: <b>${esc(r.coverage || 'unknown')}</b>; evidence: ${esc(r.confidence || 'unknown')}; ${r.requests?.length || 0} GET requests.`);
   for (const i of r.phpinfo) notes.push(`<b>Public phpinfo() page:</b> <a href="${esc(i.url)}">${esc(i.url)}</a>. Delete it, it gives attackers your exact setup.${i.uploadProgress ? ` (session.upload_progress.enabled = ${esc(i.uploadProgress)})` : ''}`);
   if (r.verdict === 'vulnerable') notes.push('Ubuntu, Debian and RHEL packages can carry the fix without changing the version number. Run the server check to confirm.');
   if (r.verdict === 'unknown' && !p) notes.push('Hiding the version is good practice. Run the server check below, or look in WordPress Site Health, to see the real version.');
   if (r.verdict === 'no-php') notes.push('The site may still run PHP behind a proxy or cache. If it\'s WordPress, Laravel or another PHP app, run the server check.');
+  lastReport = r; $('#download').hidden = false;
   $('#out').innerHTML = `<div class="card"><p class="verdict ${cls}">${esc(text)}</p>
     <p class="muted">${esc(r.url)}</p><ul>${notes.map((n) => `<li>${n}</li>`).join('')}</ul>
     ${r.verdict === 'patched' || r.verdict === 'no-php' || cls === 'ok' ? '' : fixes(r)}</div>`;
@@ -158,8 +163,10 @@ function render(r) {
 $('#f').addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = $('#u').value.trim();
+  $('#download').hidden = true; lastReport = undefined;
   $('#go').disabled = true; $('#go').textContent = 'Scanning…'; $('#out').innerHTML = '';
   try {
+    if (!API) throw new Error('Web scanning is not configured for this installation. Use the command-line scanner below.');
     const res = await fetch(`${API}/?url=${encodeURIComponent(url)}`).catch(() => {
       throw new Error(`Couldn't reach the scanner service at ${API}. Is the Worker deployed (or \`wrangler dev\` running)?`);
     });
@@ -171,6 +178,17 @@ $('#f').addEventListener('submit', async (e) => {
     $('#out').innerHTML = `<div class="card"><p class="verdict warn">${esc(err.message || 'Scan failed')}</p></div>`;
   } finally { $('#go').disabled = false; $('#go').textContent = 'Scan'; }
 });
+
+$('#download').addEventListener('click', () => {
+  if (!lastReport) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(lastReport, null, 2)], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'php2shell-report.json' });
+  a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+if (!API) {
+  $('#out').textContent = 'Browser scans are not configured on this installation. The CLI commands below work independently.';
+  $('#go').disabled = true;
+}
 
 document.querySelectorAll('.copy').forEach((d) => {
   const b = Object.assign(document.createElement('button'), { textContent: 'Copy', type: 'button' });
